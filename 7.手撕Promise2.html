@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+
+        function MyPromise(fn) {
+
+            this.promiseState = 'pending'
+            this.promiseResult = undefined
+
+            this.thenCallback = undefined
+            this.catchCallback = undefined
+
+            var _this = this
+            
+            var resolve = function (value) {
+                if (_this.promiseState === 'pending') {
+                    _this.promiseState = 'fulfilled'
+                    _this.promiseResult = value
+
+                    if (value instanceof MyPromise) {
+                        value.then(function (res) {
+                            if (_this.thenCallback) {
+                                _this.thenCallback(res)
+                            }
+                        }) 
+                    } else {
+                        setTimeout(function () {
+                            if (_this.thenCallback) {
+                                _this.thenCallback(value)
+                            }
+                        })
+                    }
+
+                    
+                }
+            }
+
+            var reject = function (errValue) {
+                if (_this.promiseState === 'pending') {
+                    _this.promiseState = 'rejected'
+                    _this.promiseResult = errValue
+
+                    setTimeout(function () {
+                        if (_this.catchCallback) {
+                            _this.catchCallback(errValue)
+                        } else if (_this.thenCallback) {
+                            _this.thenCallback(errValue)
+                        } else {
+                            throw('catch is not defined')
+                        }
+                    }) 
+                }
+            }
+            if (fn) {
+                fn(resolve, reject)
+            }
+
+        }
+
+        MyPromise.prototype.then = function (callback) {
+            var _this = this
+            return new MyPromise(function (resolve, reject) {
+                _this.thenCallback = function (value) {
+                    if (_this.promiseState === 'rejected') {
+                        reject(value)
+                    } else {
+                        var res = callback(value)
+                        if (res instanceof MyPromise && res.promiseState === 'rejected') {
+                            res.catch(function (errValue) {
+                                reject(errValue)
+                            })
+                        } else {
+                            resolve(res)
+                        }
+                    }
+                } 
+            })
+        }
+
+        MyPromise.prototype.catch = function (callback) {
+            var _this = this
+            return new Promise(function (resolve, reject) {
+                _this.catchCallback = function (errValue) {
+                    var res = callback(errValue)
+                    resolve(res) 
+                }
+            })
+        }
+
+        MyPromise.resolve = function (value) {
+            return new MyPromise(function (resolve, reject) {
+                resolve(value)
+            })
+        }
+        MyPromise.reject = function (errValue) {
+            return new MyPromise(function (resolve, reject) {
+                reject(errValue)
+            })
+        }
+
+        var p = new MyPromise(function(resolve, reject) { 
+            resolve('错误的值')
+        })
+
+        p.then(function (res) {
+            console.log(res)
+            console.log('第一个then')
+            return 1
+        }).then(function (res) {
+            console.log(res)
+            console.log('第二个then')
+            return MyPromise.reject('中断')
+        })
+        .catch(function (err) {
+            console.log(err)
+            console.log('catch 执行')
+            return 123
+        })
+
+        console.log(p)
+        
+
+    </script>
+</body>
+</html>

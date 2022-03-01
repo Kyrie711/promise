@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+
+        function MyPromise(fn) {
+
+            this.promiseState = 'pending'
+            this.promiseResult = undefined
+
+            this.thenCallback = undefined
+            this.catchCallback = undefined
+
+            var _this = this
+            
+            var resolve = function (value) {
+                if (_this.promiseState === 'pending') {
+                    _this.promiseState = 'fulfilled'
+                    _this.promiseResult = value
+
+                    if (value instanceof MyPromise) {
+                        value.then(function (res) {
+                            if (_this.thenCallback) {
+                                _this.thenCallback(res)
+                            }
+                        }) 
+                    } else {
+                        setTimeout(function () {
+                            if (_this.thenCallback) {
+                                _this.thenCallback(value)
+                            }
+                        })
+                    }
+
+                    
+                }
+            }
+
+            var reject = function (errValue) {
+                if (_this.promiseState === 'pending') {
+                    _this.promiseState = 'rejected'
+                    _this.promiseResult = errValue
+
+                    setTimeout(function () {
+                        if (_this.catchCallback) {
+                            _this.catchCallback(errValue)
+                        } else if (_this.thenCallback) {
+                            _this.thenCallback(errValue)
+                        } else {
+                            throw('catch is not defined')
+                        }
+                    }) 
+                }
+            }
+            if (fn) {
+                fn(resolve, reject)
+            }
+
+        }
+
+        MyPromise.prototype.then = function (callback) {
+            var _this = this
+            return new MyPromise(function (resolve, reject) {
+                _this.thenCallback = function (value) {
+                    if (_this.promiseState === 'rejected') {
+                        reject(value)
+                    } else {
+                        var res = callback(value)
+                        if (res instanceof MyPromise && res.promiseState === 'rejected') {
+                            res.catch(function (errValue) {
+                                reject(errValue)
+                            })
+                        } else {
+                            resolve(res)
+                        }
+                    }
+                } 
+            })
+        }
+
+        MyPromise.prototype.catch = function (callback) {
+            var _this = this
+            return new Promise(function (resolve, reject) {
+                _this.catchCallback = function (errValue) {
+                    var res = callback(errValue)
+                    resolve(res) 
+                }
+            })
+        }
+
+        MyPromise.resolve = function (value) {
+            return new MyPromise(function (resolve, reject) {
+                resolve(value)
+            })
+        }
+        MyPromise.reject = function (errValue) {
+            return new MyPromise(function (resolve, reject) {
+                reject(errValue)
+            })
+        }
+
+        MyPromise.all = function (promiseArr) {
+            let resArr = []
+            return new MyPromise(function (resolve, reject) {
+                promiseArr.forEach((item, index) => {
+                    
+                    item.then(res => {
+                        resArr[index] = res
+                        var allResolve = promiseArr.every(_item => {
+                            return _item.promiseState === 'fulfilled'
+                        })
+                        if (allResolve) {
+                            resolve(resArr)
+                        }
+                    }).catch(err => {
+                        reject(err)
+                    })
+                });
+            })
+        }
+        MyPromise.race = function (promiseArr) {
+            return new MyPromise(function (resolve, reject) {
+                promiseArr.forEach((item, index) => {
+                    
+                    item.then(res => {
+                       resolve(res)
+                    }).catch(err => {
+                        reject(err)
+                    })
+                });
+            })
+        }
+
+        let p1 = new MyPromise((resolve, reject) => {
+                setTimeout(() => {
+                    resolve('第⼀个promise执⾏完毕')
+                }, 1000)
+            })
+        let p2 = new MyPromise((resolve, reject) => {
+            setTimeout(() => {
+                reject('第⼆个promise执⾏完毕')
+            }, 2000)
+        })
+        let p3 = new MyPromise((resolve, reject) => {
+            setTimeout(() => {
+                resolve('第三个promise执⾏完毕')
+            }, 300)
+        })
+
+        MyPromise.race([p1,p3,p2]).then(function (res) {
+            console.log(res)
+        }).catch(function (err) {
+            console.error(err)
+        })
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        var a = 1
+        var b = 2
+        setTimeout(() => {
+            console.log('第一个任务');
+            var d1 = new Date().getTime()
+            var d2 = new Date().getTime()
+            while (d2-d1<2000) {
+                d2 = new Date().getTime()
+            }
+        },500)
+
+        setTimeout(() => {
+            console.log('第二个任务');
+        },600)
+        // 时间到之后提入消息队列中
+        // 同步一定在异步的前面
+        // js是解释型语言，边解释，边运行
+        console.log(a+b);
+    </script>
+</body>
+</html>

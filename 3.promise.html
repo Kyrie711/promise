@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        console.log(Promise);
+        console.dir(Promise)
+
+        var p = new Promise(function(resolve, reject) { 
+            reject('错误的值')
+        })
+
+        p.then(function (res) {
+            console.log(res)
+            console.log(1)
+            return 1
+        })
+        .catch(function (err) {
+            console.log(err)
+            console.log('catch 执行')
+            return 123
+        })
+
+        // console.log(p)
+
+        let p1 = new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    resolve('第⼀个promise执⾏完毕')
+                }, 1000)
+            })
+        let p2 = new Promise((resolve, reject) => {
+            setTimeout(() => {
+                resolve('第⼆个promise执⾏完毕')
+            }, 2000)
+        })
+        let p3 = new Promise((resolve, reject) => {
+            setTimeout(() => {
+                resolve('第三个promise执⾏完毕')
+            }, 3000)
+        })
+        p1.then((res) => {
+            console.log(res)
+            return p2
+        }).then((res) => {
+            console.log(res)
+            return p3
+        }).then((res) => {
+            console.log(res)
+        })
+
+        // Promise.all([p1,p3,p2]).then(function (res) {
+        //     console.log(res)
+        // }).catch(function (err) {
+        //     console.error(err)
+        // })
+    </script>
+</body>
+</html>
